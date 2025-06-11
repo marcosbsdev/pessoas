@@ -84,7 +84,11 @@ docker compose up mysql redis adminer
 - MySQL estará disponível em `localhost:3306`
 - Redis em `localhost:6379`
 - Adminer (client web para banco) em [http://localhost:8081](http://localhost:8081)
-
+- As credenciais do Adminer
+  - Servidor `mysql`
+  - Usuario `user`
+  - Senha `1234`
+  - Base de Dados `db_pessoas`
 ---
 
 ### 3. Executando a aplicação via Maven Wrapper
