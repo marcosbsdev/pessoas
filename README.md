@@ -69,7 +69,8 @@ Objetivo de estudar Java 21 e recursos adicionais para desenvolvimento back-end 
 
 - [Docker](https://www.docker.com/products/docker-desktop)
 - [Java 21+](https://adoptium.net/) (apenas para execução local sem Docker)
-- Git (para clonar o projeto)
+- [Maven](https://maven.apache.org/download.cgi) (apenas para execução local sem Docker)
+- [Git](https://github.com/marcosbsdev/pessoas/tree/main) (para clonar o projeto)
 
 ---
 
