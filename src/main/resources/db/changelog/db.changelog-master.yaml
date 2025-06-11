@@ -1,0 +1,28 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: Marcos Batista
+      changes:
+        - createTable:
+            tableName: pessoa
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT AUTO_INCREMENT
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: cep
+                  type: VARCHAR(255)
+              - column:
+                  name: cidade
+                  type: VARCHAR(255)
+              - column:
+                  name: cpf
+                  type: VARCHAR(255)
+              - column:
+                  name: estado
+                  type: VARCHAR(255)
+              - column:
+                  name: nome
+                  type: VARCHAR(255)
