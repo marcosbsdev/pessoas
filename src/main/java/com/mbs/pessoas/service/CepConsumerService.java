@@ -2,6 +2,7 @@ package com.mbs.pessoas.service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
@@ -32,7 +33,7 @@ public class CepConsumerService implements MessageListener {
             Map<String, Object> payload = objectMapper.readValue(message.getBody(), Map.class);
 
             Object idObj = payload.get("id");
-            
+
             Long id = switch (idObj) {
                 case null -> throw new IllegalArgumentException("Campo id ausente no payload: " + payload);
                 case Number n -> n.longValue();
@@ -40,31 +41,45 @@ public class CepConsumerService implements MessageListener {
                 case List<?> list when !list.isEmpty() -> Long.valueOf(String.valueOf(list.getLast()));
                 default -> throw new IllegalArgumentException("Formato inesperado para o campo id: " + idObj);
             };
-            
+
             String cep = payload.get("cep").toString();
 
             // Chama ViaCEP
             log.info("Buscando informações do CEP: {}", cep);
             Map resposta = viacepClientService.buscarCep(cep);
 
-            Map<String, Object> dadosCep = resposta;
-            log.info("Dados do CEP: {}", dadosCep);
-
-            String cidade = dadosCep.getOrDefault("localidade", "").toString();
-            String estado = dadosCep.getOrDefault("uf", "").toString();
-
-            Pessoa pessoa = pessoaService.salvarCidadeEstado(id, cidade, estado);
-            log.info("Pessoa atualizada: {}", pessoa);
-            
-            // Atualiza o cache do CEP, se já existir
-            if (pessoa != null && pessoa.getCep() != null && pessoaService.cacheExistente(CACHE_PESSOAS_POR_CEP, pessoa.getCep())) {
-                List<Pessoa> pessoasPorCep = repository.findByCep(pessoa.getCep());
-                pessoaService.manutencaoCache(pessoa.getCep(), CACHE_PESSOAS_POR_CEP, pessoasPorCep);
+            if (Objects.nonNull(resposta.get("erro"))) {
+                log.warn("Nenhuma informação encontrada para o CEP: {}", cep);
+                return;
             }
+            this.processarRespostaCep(resposta, id);
 
         } catch (Exception e) {
             e.printStackTrace();
             log.error("Erro ao processar mensagem: {}", message, e);
-        }   
+        }
+    }
+
+    public void processarRespostaCep(Map<String, Object> resposta, Long id) {
+        Map<String, Object> dadosCep = resposta;
+        log.info("Dados do CEP: {}", dadosCep);
+
+        String cidade = dadosCep.getOrDefault("localidade", null) != null ? dadosCep.get("localidade").toString()
+                : null;
+        String estado = dadosCep.getOrDefault("uf", null) != null ? dadosCep.get("uf").toString() : null;
+
+        Pessoa pessoa = pessoaService.salvarCidadeEstado(id, cidade, estado);
+        log.info("Pessoa atualizada: {}", pessoa);
+
+        // Atualiza o cache do CEP, se já existir
+        this.atualizarCacheCep(pessoa);
+    }
+
+    public void atualizarCacheCep(Pessoa pessoa) {
+        if (pessoa != null && pessoa.getCep() != null
+                && pessoaService.cacheExistente(CACHE_PESSOAS_POR_CEP, pessoa.getCep())) {
+            List<Pessoa> pessoasPorCep = repository.findByCep(pessoa.getCep());
+            pessoaService.manutencaoCache(pessoa.getCep(), CACHE_PESSOAS_POR_CEP, pessoasPorCep);
+        }
     }
 }
