@@ -48,21 +48,21 @@ public class PessoaService {
         }
 
         // Atualiza o cache do CEP, se já existir
-        if (salvarPessoa.getCep() != null && this.cacheExistente(CACHE_PESSOAS_POR_CEP, salvarPessoa.getCep())) {
-            List<Pessoa> pessoasPorCep = repository.findByCep(salvarPessoa.getCep());
-            this.manutencaoCache(salvarPessoa.getCep(), CACHE_PESSOAS_POR_CEP, pessoasPorCep);
-        }
-
+        this.atualizaCachePessoaPorCEP(salvarPessoa);
         // Atualiza o cache de todas as pessoas
-        if (this.cacheExistente(CACHE_PESSOAS, "all")) {
-            List<Pessoa> todasPessoas = repository.findAll();
-            this.manutencaoCache("all", CACHE_PESSOAS, todasPessoas);
-        }
+        this.atualizaCacheTodasPessoas();
 
         // Publica na fila
         this.enviarParaFila(salvarPessoa);
 
         return salvarPessoa;
+    }
+
+    private void atualizaCacheTodasPessoas() {
+        if (this.cacheExistente(CACHE_PESSOAS, "all")) {
+            List<Pessoa> todasPessoas = repository.findAll();
+            this.manutencaoCache("all", CACHE_PESSOAS, todasPessoas);
+        }
     }
 
     @Cacheable(value = CACHE_PESSOAS, key = "'all'", unless = "#result == null or #result.isEmpty()")
@@ -79,8 +79,24 @@ public class PessoaService {
         return repository.findById(id);
     }
 
+    private void atualizaCachePessoaPorCEP(Pessoa pessoa) {
+        if (pessoa.getCep() != null && this.cacheExistente(CACHE_PESSOAS_POR_CEP, pessoa.getCep())) {
+            List<Pessoa> pessoasPorCep = repository.findByCep(pessoa.getCep());
+            this.manutencaoCache(pessoa.getCep(), CACHE_PESSOAS_POR_CEP, pessoasPorCep);
+        }
+    }
+
     public void deletar(Long id) {
+        Optional<Pessoa> optionalPessoa = repository.findById(id);
+        Pessoa pessoa = optionalPessoa.get();
+        
         repository.deleteById(id);
+        this.atualizaTodosCache(pessoa);
+    }
+
+    public void atualizaTodosCache(Pessoa pessoa) {
+        this.atualizaCacheTodasPessoas();
+        this.atualizaCachePessoaPorCEP(pessoa);
     }
 
     public Pessoa salvarCidadeEstado(Long id, String cidade, String estado) {
