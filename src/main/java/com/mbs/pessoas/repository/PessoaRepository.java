@@ -14,7 +14,15 @@ import com.mbs.pessoas.model.Pessoa;
 
 @Repository
 public interface PessoaRepository {
-     @SqlQuery("SELECT * FROM pessoa WHERE cep = :cep")
+     @SqlQuery(
+          """
+               SELECT 
+                    * 
+               FROM 
+                    pessoa 
+               WHERE 
+                    cep = :cep
+          """)
      @RegisterBeanMapper(Pessoa.class)
      List<Pessoa> findByCep(String cep);
 
