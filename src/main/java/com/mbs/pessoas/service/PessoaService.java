@@ -112,12 +112,20 @@ public class PessoaService {
         return pessoa;
     }
 
+    @org.springframework.retry.annotation.Retryable(maxAttempts = 5, backoff = @org.springframework.retry.annotation.Backoff(delay = 2000, multiplier = 2))
     private void enviarParaFila(Pessoa pessoa) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("id", pessoa.getId());
         payload.put("cep", pessoa.getCep());
+        // publish with retry/backoff in case Redis briefly unavailable
         redisTemplate.convertAndSend("filaCep", payload);
     }
+
+    @org.springframework.retry.annotation.Recover
+    private void recoverEnviarParaFila(RuntimeException e, Pessoa pessoa) {
+        log.error("Failed to publish to Redis after retries. Message will be dropped for id={}. Cause: {}", pessoa.getId(), e.getMessage());
+    }
+
 
     @SuppressWarnings("null")
     public void manutencaoCache(String key, String value, List<Pessoa> pessoasParaCache) {

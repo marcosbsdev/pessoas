@@ -37,9 +37,10 @@ public class RedisConfig {
     public LettuceConnectionFactory redisConnectionFactory() {
         RedisStandaloneConfiguration serverConfig = new RedisStandaloneConfiguration(redisHost, redisPort);
 
-        LettuceClientConfiguration clientConfig = LettuceClientConfiguration.builder()
-                .commandTimeout(Duration.ofMillis(connectTimeoutMillis))
-                .build();
+    LettuceClientConfiguration clientConfig = LettuceClientConfiguration.builder()
+        .commandTimeout(Duration.ofMillis(connectTimeoutMillis))
+        .clientOptions(io.lettuce.core.ClientOptions.builder().autoReconnect(true).build())
+        .build();
 
         LettuceConnectionFactory factory = new LettuceConnectionFactory(serverConfig, clientConfig);
         // initialize now so any connection issues surface early when running locally (in Docker Compose will retry)
