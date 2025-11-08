@@ -12,15 +12,25 @@ services:
     image: 'redis:latest'
     ports:
       - '6379:6379'
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
   app:
     build: .
     environment:
       - SPRING_PROFILES_ACTIVE=local
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
+      - SPRING_REDIS_TIMEOUT=10000
     ports:
       - '8080:8080'
     depends_on:
-      - mysql
-      - redis
+      redis:
+        condition: service_started
+      mysql:
+        condition: service_started
   adminer:
     image: adminer
     restart: always

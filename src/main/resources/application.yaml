@@ -24,6 +24,7 @@ spring:
   redis:
     host: redis
     port: 6379
+    connect-timeout: 10000
 
   integrations:
     viacep:
