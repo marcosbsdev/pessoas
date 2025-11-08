@@ -3,9 +3,9 @@ spring:
     name: pessoas
 
   datasource:
-    url: jdbc:mysql://mysql:3306/db_pessoas
-    username: user
-    password: 1234
+    url: ${DATABASE_URL:jdbc:mysql://localhost:3306/pessoas}
+    username: ${DATABASE_USERNAME:root}
+    password: ${DATABASE_PASSWORD:root}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -22,8 +22,8 @@ spring:
     type: redis
 
   redis:
-    host: redis
-    port: 6379
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
     connect-timeout: 10000
 
   integrations:
